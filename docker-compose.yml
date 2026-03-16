@@ -1,0 +1,16 @@
+version: '3.8'
+
+services:
+  bookings:
+    build:
+      context: .
+      dockerfile: server/Dockerfile
+    ports:
+      - "3210:3210"
+    volumes:
+      - ./data:/data
+    environment:
+      - DB_PATH=/data/bookings.db
+      - PORT=3210
+      - PUBLIC_DIR=/public
+    restart: unless-stopped
