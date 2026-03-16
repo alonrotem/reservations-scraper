@@ -1,3 +1,4 @@
 data/
 {server,extension,public}/
 sample-pages/
+apt-bookings*.*
