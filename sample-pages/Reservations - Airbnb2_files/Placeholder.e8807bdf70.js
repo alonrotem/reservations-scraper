@@ -1,5 +1,0 @@
-__d(function(g,r,i,a,m,e,d){"use strict";var t=r(d[0]).default;Object.defineProperty(e,"__esModule",{value:!0}),e.default=function(){const t=(0,n.default)();return(0,f.jsxs)(f.Fragment,{children:[t&&(0,f.jsx)("div",{id:(0,s.default)(t),"aria-busy":!0},"header"),(0,f.jsx)(u.default,{})]})};var u=t(r(d[1])),n=t(r(d[2])),s=t(r(d[3])),f=r(d[4])},"333543",["ba7a76","b5202c","adb4ca","aec7d5","b8c07d"]);
-__d(function(g,r,i,a,m,e,d){"use strict";Object.defineProperty(e,"__esModule",{value:!0}),e.default=void 0;const t=(0,r(d[0]).createContext)(void 0);e.default=t},"429067",["07aa1f"]);
-__d(function(g,r,i,a,m,e,d){"use strict";var t=r(d[0]).default;Object.defineProperty(e,"__esModule",{value:!0}),e.default=function(){return(0,u.useContext)(n.default)};var u=r(d[1]),n=t(r(d[2]))},"adb4ca",["ba7a76","07aa1f","429067"]);
-__d(function(g,r,i,a,m,e,d){"use strict";Object.defineProperty(e,"__esModule",{value:!0}),e.default=function(t){return`${t}-header`}},"aec7d5",[]);
-//# sourceMappingURL=https://sourcemaps.d.musta.ch/airbnb/static/packages/web/common/frontend/panel-layout/components/Placeholder/Placeholder.9276c5309c.js.map
