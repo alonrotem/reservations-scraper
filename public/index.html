@@ -120,6 +120,49 @@
   .booking-link { font-size: 11px; color: var(--booking); text-decoration: none; font-family: 'DM Mono', monospace; }
   .booking-link:hover { text-decoration: underline; }
 
+
+  /* ── Calendar ────────────────────────────────────────────────────── */
+  .cal-toggle-btn {
+    font-size: 12px; font-family: 'DM Mono', monospace;
+    border: 1px solid var(--border); border-radius: 6px;
+    padding: 5px 10px; background: transparent; cursor: pointer;
+    color: var(--muted); transition: all 0.15s;
+  }
+  .cal-toggle-btn.active { background: var(--text); color: var(--surface); border-color: var(--text); }
+
+  .cal-wrap { margin-bottom: 28px; }
+  .cal-months { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+  @media (max-width: 580px) { .cal-months { grid-template-columns: 1fr; } }
+
+  .cal-month { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 14px; }
+  .cal-month-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; }
+  .cal-month-title { font-family: 'DM Mono', monospace; font-size: 13px; font-weight: 500; color: var(--text); }
+  .cal-nav { display: flex; align-items: center; gap: 6px; }
+  .cal-nav-btn { font-size: 14px; border: none; background: none; cursor: pointer; color: var(--muted); padding: 2px 6px; border-radius: 4px; line-height: 1; }
+  .cal-nav-btn:hover { background: var(--bg); color: var(--text); }
+  .cal-jump { display: flex; gap: 4px; }
+  .cal-jump select { font-size: 11px; font-family: 'DM Mono', monospace; border: 1px solid var(--border); border-radius: 5px; padding: 2px 4px; background: var(--surface); color: var(--text); cursor: pointer; }
+
+  .cal-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 2px; }
+  .cal-dow { font-size: 10px; font-weight: 500; text-align: center; color: var(--muted); padding: 3px 0; font-family: 'DM Mono', monospace; text-transform: uppercase; }
+  .cal-cell { min-height: 34px; border-radius: 5px; padding: 3px 4px; font-size: 11px; position: relative; cursor: default; }
+  .cal-cell.this-month { background: var(--bg); }
+  .cal-cell.other-month { opacity: 0.25; }
+  .cal-cell.today { outline: 2px solid var(--text); outline-offset: -2px; }
+  .cal-cell.today .cal-day-num { font-weight: 500; }
+  .cal-cell.booked-airbnb { background: var(--airbnb-bg); }
+  .cal-cell.booked-booking { background: var(--booking-bg); }
+  .cal-cell.booked-both { background: linear-gradient(135deg, var(--airbnb-bg) 50%, var(--booking-bg) 50%); }
+  .cal-day-num { font-size: 11px; color: var(--muted); line-height: 1.2; }
+  .cal-cell.booked-airbnb .cal-day-num,
+  .cal-cell.booked-booking .cal-day-num,
+  .cal-cell.booked-both .cal-day-num { color: var(--text); }
+  .cal-event { font-size: 9px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-top: 1px; border-radius: 2px; padding: 0 2px; line-height: 1.5; }
+  .cal-event.ab { color: var(--airbnb); }
+  .cal-event.bk { color: var(--booking); }
+  .cal-legend { display: flex; gap: 14px; margin-top: 10px; font-size: 11px; color: var(--muted); }
+  .cal-legend-dot { width: 10px; height: 10px; border-radius: 2px; display: inline-block; margin-right: 4px; vertical-align: middle; }
+
   /* Settings panel */
   .panel { display: none; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 24px; margin-bottom: 28px; }
   .panel.open { display: block; }
@@ -161,6 +204,7 @@
     <button class="lang-btn active" id="btn-en" onclick="setLang('en')">EN</button>
     <button class="lang-btn" id="btn-bg" onclick="setLang('bg')">БГ</button>
     <button class="settings-btn" id="dark-btn" onclick="toggleDark()" title="Toggle dark mode">☀</button>
+    <button class="cal-toggle-btn" id="cal-toggle-btn" onclick="toggleCal()">Calendar</button>
     <button class="sync-btn" id="sync-btn" onclick="doSync()">
       <span id="sync-icon">↻</span> <span id="sync-label">Sync</span>
     </button>
@@ -205,6 +249,7 @@
   <!-- Content: shown once first load succeeds -->
   <div id="content-area">
     <div id="stats-row" class="stats-row"></div>
+    <div class="cal-wrap" id="cal-wrap" style="display:none;"></div>
     <div class="section-head">
       <span class="section-title" id="lbl-upcoming">Upcoming</span>
     </div>
@@ -246,6 +291,10 @@ const T = {
     openLink: 'Open ↗',
     loading: 'Loading…',
     connecting: 'Connecting…',
+    showCal: 'Calendar',
+    hideCal: 'Calendar',
+    calMonths: ['January','February','March','April','May','June','July','August','September','October','November','December'],
+    calDows: ['Mo','Tu','We','Th','Fr','Sa','Su'],
   },
   bg: {
     title: 'Алония',
@@ -271,6 +320,10 @@ const T = {
     openLink: 'Отвори ↗',
     loading: 'Зарежда…',
     connecting: 'Свързва…',
+    showCal: 'Календар',
+    hideCal: 'Календар',
+    calMonths: ['Януари','Февруари','Март','Април','Май','Юни','Юли','Август','Септември','Октомври','Ноември','Декември'],
+    calDows: ['Пн','Вт','Ср','Чт','Пт','Сб','Нд'],
   }
 };
 
@@ -350,6 +403,7 @@ function setLang(l) {
   document.getElementById('lbl-past').textContent = t('past');
   document.getElementById('sync-label').textContent = isSyncing ? t('syncing') : t('syncLabel');
   if (firstLoadDone) renderAll();
+  applyCal();
 }
 
 // ── Date helpers ──────────────────────────────────────────────────────────
@@ -465,6 +519,7 @@ async function loadBookingsWithRetry(retryDelay = 3000) {
       firstLoadDone = true;
     }
     renderAll();
+    if (showCal) renderCal();
   } catch (e) {
     console.warn('[bookings] fetch error, retrying in', retryDelay, 'ms —', e.message);
     document.getElementById('loader').textContent = t('connecting');
@@ -521,8 +576,148 @@ function togglePast() {
   renderAll();
 }
 
+
+// ── Calendar ──────────────────────────────────────────────────────────────
+let showCal = localStorage.getItem('showCal') === '1';
+// calBase: the first of the left-hand month currently shown
+let calBase = new Date();
+calBase.setDate(1);
+
+function toggleCal() {
+  showCal = !showCal;
+  localStorage.setItem('showCal', showCal ? '1' : '0');
+  applyCal();
+}
+
+function applyCal() {
+  const wrap = document.getElementById('cal-wrap');
+  const btn  = document.getElementById('cal-toggle-btn');
+  if (!wrap || !btn) return;
+  wrap.style.display = showCal ? 'block' : 'none';
+  btn.classList.toggle('active', showCal);
+  btn.textContent = t(showCal ? 'hideCal' : 'showCal');
+  if (showCal) renderCal();
+}
+
+function renderCal() {
+  const wrap = document.getElementById('cal-wrap');
+  if (!wrap) return;
+
+  // Build a date->bookings lookup
+  const dateMap = {}; // 'YYYY-MM-DD' -> [{platform, name}]
+  const allB = [...allBookings, ...pastBookings];
+  for (const b of allB) {
+    if (b.status === 'cancelled') continue;
+    let d = new Date(b.checkin + 'T00:00:00');
+    const end = new Date(b.checkout + 'T00:00:00');
+    while (d < end) {
+      const key = d.toISOString().slice(0, 10);
+      if (!dateMap[key]) dateMap[key] = [];
+      dateMap[key].push(b);
+      d.setDate(d.getDate() + 1);
+    }
+  }
+
+  const months = t('calMonths');
+  const dows   = t('calDows');
+  const today  = new Date(); today.setHours(0,0,0,0);
+
+  // Render two months: calBase and calBase+1
+  let html = '<div class="cal-months">';
+  for (let m = 0; m < 2; m++) {
+    const base = new Date(calBase.getFullYear(), calBase.getMonth() + m, 1);
+    const year = base.getFullYear();
+    const mon  = base.getMonth();
+    const daysInMonth = new Date(year, mon + 1, 0).getDate();
+    // Monday-first: getDay() 0=Sun → shift
+    let startDow = base.getDay(); // 0=Sun
+    startDow = startDow === 0 ? 6 : startDow - 1; // Mon=0
+
+    // Year/month jump selectors
+    let yearOpts = '';
+    for (let y = today.getFullYear() - 1; y <= today.getFullYear() + 3; y++) {
+      yearOpts += `<option value="${y}" ${y===year?'selected':''}>${y}</option>`;
+    }
+    let monOpts = '';
+    months.forEach((mn, i) => {
+      monOpts += `<option value="${i}" ${i===mon?'selected':''}>${mn}</option>`;
+    });
+
+    // Navigation only on left month header
+    const navHtml = m === 0 ? `
+      <div class="cal-nav">
+        <button class="cal-nav-btn" onclick="calShift(-1)">‹</button>
+        <div class="cal-jump">
+          <select onchange="calJump(parseInt(this.value), ${mon})">${yearOpts}</select>
+          <select onchange="calJump(${year}, parseInt(this.value))">${monOpts}</select>
+        </div>
+        <button class="cal-nav-btn" onclick="calShift(1)">›</button>
+      </div>` : '';
+
+    // Day-of-week headers
+    let gridHtml = dows.map(d => `<div class="cal-dow">${d}</div>`).join('');
+
+    // Empty cells before first day
+    for (let i = 0; i < startDow; i++) gridHtml += '<div class="cal-cell other-month"></div>';
+
+    // Day cells
+    for (let day = 1; day <= daysInMonth; day++) {
+      const dateStr = `${year}-${String(mon+1).padStart(2,'0')}-${String(day).padStart(2,'0')}`;
+      const dt = new Date(dateStr + 'T00:00:00');
+      const isToday = dt.getTime() === today.getTime();
+      const bs = dateMap[dateStr] || [];
+      const hasAB = bs.some(b => b.platform === 'airbnb');
+      const hasBK = bs.some(b => b.platform === 'booking');
+      let cls = 'cal-cell this-month';
+      if (isToday) cls += ' today';
+      if (hasAB && hasBK) cls += ' booked-both';
+      else if (hasAB) cls += ' booked-airbnb';
+      else if (hasBK) cls += ' booked-booking';
+
+      // Show first booking's guest name initial or checkin marker
+      let eventsHtml = '';
+      for (const b of bs.slice(0,1)) {
+        const isCi = dateStr === b.checkin;
+        const label = isCi ? (b.guest_name ? b.guest_name.split(' ')[0] : '●') : '·';
+        const cls2 = b.platform === 'airbnb' ? 'ab' : 'bk';
+        eventsHtml += `<div class="cal-event ${cls2}">${label}</div>`;
+      }
+
+      gridHtml += `<div class="${cls}"><div class="cal-day-num">${day}</div>${eventsHtml}</div>`;
+    }
+
+    html += `
+    <div class="cal-month">
+      <div class="cal-month-head">
+        <span class="cal-month-title">${months[mon]} ${year}</span>
+        ${navHtml}
+      </div>
+      <div class="cal-grid">${gridHtml}</div>
+    </div>`;
+  }
+
+  html += `</div>
+  <div class="cal-legend">
+    <span><span class="cal-legend-dot" style="background:var(--airbnb-bg);border:1px solid var(--airbnb);opacity:0.8"></span>Airbnb</span>
+    <span><span class="cal-legend-dot" style="background:var(--booking-bg);border:1px solid var(--booking);opacity:0.8"></span>Booking.com</span>
+  </div>`;
+
+  wrap.innerHTML = html;
+}
+
+function calShift(delta) {
+  calBase = new Date(calBase.getFullYear(), calBase.getMonth() + delta, 1);
+  renderCal();
+}
+
+function calJump(year, mon) {
+  calBase = new Date(year, mon, 1);
+  renderCal();
+}
+
 // ── Init ──────────────────────────────────────────────────────────────────
 setLang(lang);
+applyCal();
 
 // 1. Load whatever is in the DB right now (fast — no iCal fetch)
 loadBookingsWithRetry();
