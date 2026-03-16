@@ -11,7 +11,7 @@ const app = express();
 app.use(express.json());
 app.use(cors({
   origin: '*',  // allow Chrome extension and any local origin
-  methods: ['GET', 'POST', 'DELETE', 'OPTIONS'],
+  methods: ['GET', 'POST', 'PATCH', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type']
 }));
 app.use(express.static(process.env.PUBLIC_DIR || path.join(__dirname, '../public')));
@@ -257,6 +257,14 @@ app.post('/api/ingest', (req, res) => {
     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 'confirmed', datetime('now'))
   `).run(newId, platform, ci, co, n, guest_name || null, guest_count || null, res_id || null, hotel_id || null);
   return res.json({ action: 'created', id: newId });
+});
+
+// PATCH guest name (manual label)
+app.patch('/api/bookings/:id/name', (req, res) => {
+  const { guest_name } = req.body;
+  db.prepare("UPDATE bookings SET guest_name = ?, scraped_at = COALESCE(scraped_at, datetime('now')) WHERE id = ?")
+    .run(guest_name || null, req.params.id);
+  res.json({ ok: true });
 });
 
 app.delete('/api/bookings/:id', (req, res) => {

@@ -104,6 +104,27 @@
   .tag-airbnb { background: var(--airbnb-bg); color: var(--airbnb); }
   .tag-booking { background: var(--booking-bg); color: var(--booking); }
 
+
+  .name-edit-wrap { display: flex; align-items: center; gap: 6px; }
+  .name-edit-input {
+    font-size: 14px; font-family: 'DM Sans', sans-serif; font-weight: 500;
+    border: none; border-bottom: 1.5px solid var(--text); background: transparent;
+    color: var(--text); padding: 1px 2px; outline: none; width: 160px;
+  }
+  .name-edit-ok {
+    font-size: 12px; border: none; background: var(--text); color: var(--surface);
+    border-radius: 5px; padding: 3px 8px; cursor: pointer; font-family: 'DM Sans', sans-serif;
+  }
+  .name-edit-cancel {
+    font-size: 12px; border: 1px solid var(--border); background: transparent;
+    color: var(--muted); border-radius: 5px; padding: 3px 8px; cursor: pointer;
+    font-family: 'DM Sans', sans-serif;
+  }
+  .name-edit-pencil {
+    font-size: 11px; color: var(--muted); cursor: pointer; opacity: 0;
+    transition: opacity 0.15s; border: none; background: none; padding: 0 3px;
+  }
+  .booking:hover .name-edit-pencil { opacity: 1; }
   .booking-name { font-size: 15px; font-weight: 500; margin-bottom: 4px; }
   .booking-name.unknown { color: var(--muted); font-weight: 400; font-style: italic; }
   .booking-dates { font-family: 'DM Mono', monospace; font-size: 12px; color: var(--muted); margin-bottom: 6px; }
@@ -289,6 +310,10 @@ const T = {
     bookingLabel: 'Booking.com iCal URL',
     saveBtn: 'Save & sync',
     openLink: 'Open ↗',
+    editName: 'Edit label',
+    namePlaceholder: 'Enter a label…',
+    ok: 'OK',
+    cancel2: 'Cancel',
     loading: 'Loading…',
     connecting: 'Connecting…',
     showCal: 'Calendar',
@@ -318,6 +343,10 @@ const T = {
     bookingLabel: 'Booking.com iCal URL',
     saveBtn: 'Запази и синхронизирай',
     openLink: 'Отвори ↗',
+    editName: 'Редактирай',
+    namePlaceholder: 'Въведи етикет…',
+    ok: 'OK',
+    cancel2: 'Откажи',
     loading: 'Зарежда…',
     connecting: 'Свързва…',
     showCal: 'Календар',
@@ -448,8 +477,8 @@ function bookingHtml(b, past) {
   const tagClass = b.platform === 'airbnb' ? 'tag-airbnb' : 'tag-booking';
   const tagLabel = b.platform === 'airbnb' ? 'AB' : 'BK';
   const nameHtml = b.guest_name
-    ? `<div class="booking-name">${b.guest_name}</div>`
-    : `<div class="booking-name unknown">${t('noDetails')}</div>`;
+    ? `<div class="booking-name" id="bname-${b.id}">${b.guest_name}<button class="name-edit-pencil" onclick="startEditName('${b.id}','${b.guest_name.replace(/'/g,"\\'")}')" title="${t('editName')}">✎</button></div>`
+    : `<div class="booking-name unknown" id="bname-${b.id}" onclick="startEditName('${b.id}','')" style="cursor:pointer;">${t('noDetails')} ✎</div>`;
   const link = bookingLink(b);
   const chips = [
     `<span class="chip">${t('nights', b.nights || 0)}</span>`,
@@ -576,6 +605,50 @@ function togglePast() {
   renderAll();
 }
 
+
+
+// ── Inline name editing ───────────────────────────────────────────────────
+function startEditName(id, current) {
+  const el = document.getElementById('bname-' + id);
+  if (!el) return;
+  el.innerHTML = `
+    <div class="name-edit-wrap">
+      <input class="name-edit-input" id="nedit-${id}" type="text"
+        value="${current}" placeholder="${t('namePlaceholder')}"
+        onkeydown="if(event.key==='Enter')saveEditName('${id}');if(event.key==='Escape')cancelEditName('${id}');"
+        autocomplete="off" />
+      <button class="name-edit-ok" onclick="saveEditName('${id}')">${t('ok')}</button>
+      <button class="name-edit-cancel" onclick="cancelEditName('${id}')">${t('cancel2')}</button>
+    </div>`;
+  const inp = document.getElementById('nedit-' + id);
+  if (inp) { inp.focus(); inp.select(); }
+}
+
+function cancelEditName(id) {
+  // Re-render just refreshes from existing data
+  renderAll();
+  if (showCal) renderCal();
+}
+
+async function saveEditName(id) {
+  const inp = document.getElementById('nedit-' + id);
+  if (!inp) return;
+  const name = inp.value.trim();
+  try {
+    await fetch(`${API}/api/bookings/${id}/name`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ guest_name: name || null })
+    });
+    // Update in local array so re-render is instant
+    const b = allBookings.find(x => x.id === id) || pastBookings.find(x => x.id === id);
+    if (b) b.guest_name = name || null;
+    renderAll();
+    if (showCal) renderCal();
+  } catch(e) {
+    console.error('Name save failed:', e);
+  }
+}
 
 // ── Calendar ──────────────────────────────────────────────────────────────
 let showCal = localStorage.getItem('showCal') === '1';
